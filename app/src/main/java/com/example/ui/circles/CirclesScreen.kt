@@ -54,7 +54,7 @@ fun CirclesScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp)
             ) {
                 Surface(
                     color = WallRaised,

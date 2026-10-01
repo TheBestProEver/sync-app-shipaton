@@ -251,33 +251,44 @@ fun SpaceHeader(
     val isWorkplace = spaceType == SpaceType.WORKPLACE
     val headerBg = if (isWorkplace) WorkplaceNavy else Night
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(headerBg)
+            .statusBarsPadding() // Ensures content sits strictly below battery, clock, and camera notch
+    ) {
+        // Generous negative space between phone UI / status bar and header content
+        Spacer(modifier = Modifier.height(6.dp))
+
         // Ambient accent top stripe for workplace / community
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 20.dp)
                 .height(3.dp)
+                .clip(RoundedCornerShape(1.5.dp))
                 .background(
                     if (isWorkplace)
                         androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            listOf(WorkplaceSteel.copy(alpha = 0.8f), WorkplaceBorder, WorkplaceNavy)
+                            listOf(WorkplaceSteel.copy(alpha = 0.9f), WorkplaceBorder, WorkplaceNavy)
                         )
                     else
                         androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            listOf(Amber.copy(alpha = 0.8f), ToneRose.copy(alpha = 0.5f), Night)
+                            listOf(Amber.copy(alpha = 0.9f), ToneRose.copy(alpha = 0.7f), Night)
                         )
                 )
         )
 
+        Spacer(modifier = Modifier.height(4.dp))
+
         Surface(
-            color = headerBg,
-            border = if (isWorkplace) androidx.compose.foundation.BorderStroke(0.5.dp, WorkplaceBorder) else null,
+            color = Color.Transparent,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -325,6 +336,10 @@ fun SpaceHeader(
                 )
             }
         }
+        Divider(
+            color = if (isWorkplace) WorkplaceBorder.copy(alpha = 0.7f) else Mullion.copy(alpha = 0.5f),
+            thickness = 0.5.dp
+        )
     }
 }
 
@@ -351,8 +366,9 @@ fun SyncButton(
     ) {
         Text(
             text = text,
+            color = if (enabled) Night else Dusk,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -371,7 +387,8 @@ fun SyncOutlinedButton(
         shape = RoundedCornerShape(12.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, if (enabled) Haze else Mullion),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = Moonlight,
+            containerColor = Color.Transparent,
+            contentColor = if (enabled) Moonlight else Dusk,
             disabledContentColor = Dusk
         ),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
@@ -379,6 +396,7 @@ fun SyncOutlinedButton(
     ) {
         Text(
             text = text,
+            color = if (enabled) Moonlight else Dusk,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium
         )
@@ -446,33 +464,59 @@ fun NightFacadeHeader(
         border = androidx.compose.foundation.BorderStroke(1.dp, if (isWorkplace) WorkplaceBorder else Mullion),
         modifier = modifier.fillMaxWidth()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Column {
-                Text(
-                    text = if (isWorkplace) "Office Presence Facade" else "Campus Window Facade",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isWorkplace) WorkplaceSteel else Haze
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "$freeCount illuminated right now",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Moonlight,
-                    fontWeight = FontWeight.Medium
-                )
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (isWorkplace) WorkplaceSteel else Amber)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isWorkplace) "Live Workplace Atmosphere" else "Live Campus Windows",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isWorkplace) WorkplaceSteel else Amber,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Mini animated facade
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    SyncWindow(StatusFamily.OPEN, "S", "Rose", WindowSize.ROLLUP)
+                    SyncWindow(StatusFamily.OPEN, "M", "Sky", WindowSize.ROLLUP)
+                    SyncWindow(if (isWorkplace) StatusFamily.FOCUSED else StatusFamily.OPEN, "E", "Sage", WindowSize.ROLLUP)
+                    SyncWindow(if (isWorkplace) StatusFamily.IN_OFFICE else StatusFamily.AWAY, "L", "Teal", WindowSize.ROLLUP)
+                }
             }
 
-            // Mini 4-window animated facade
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                SyncWindow(StatusFamily.OPEN, "1", "Rose", WindowSize.ROLLUP)
-                SyncWindow(StatusFamily.OPEN, "2", "Sky", WindowSize.ROLLUP)
-                SyncWindow(if (isWorkplace) StatusFamily.FOCUSED else StatusFamily.BUSY, "3", "Sage", WindowSize.ROLLUP)
-                SyncWindow(StatusFamily.AWAY, "4", "Teal", WindowSize.ROLLUP)
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (isWorkplace)
+                    "$freeCount colleagues available · 7 in focus"
+                else
+                    "$freeCount friends free nearby right now",
+                style = MaterialTheme.typography.titleMedium,
+                color = Moonlight,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = if (isWorkplace)
+                    "Pier 57: Design & Core Mobile clusters active"
+                else
+                    "Clusters at The Regenstein Library & Ex Libris Café",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Haze
+            )
         }
     }
 }

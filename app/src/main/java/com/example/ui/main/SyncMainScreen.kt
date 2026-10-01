@@ -89,6 +89,7 @@ fun SyncMainScreen(
 
     Scaffold(
         containerColor = Night,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SpaceHeader(
                 spaceName = currentSpace.name,

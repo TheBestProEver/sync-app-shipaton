@@ -123,12 +123,18 @@ fun StatusBottomSheet(
                                 else -> ""
                             }
                         },
-                        label = { Text(title) },
+                        label = {
+                            Text(
+                                text = title,
+                                color = if (isSel) Night else Moonlight,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Moonlight,
                             selectedLabelColor = Night,
                             containerColor = Wall,
-                            labelColor = Haze
+                            labelColor = Moonlight
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = true,

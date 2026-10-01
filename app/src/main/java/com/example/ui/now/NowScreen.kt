@@ -71,6 +71,7 @@ fun NowScreen(
 
     Scaffold(
         containerColor = if (isWorkplace) WorkplaceNavy else Night,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             SyncButton(
                 text = if (isWorkplace) "Send team pulse" else "Send pulse",
@@ -87,7 +88,7 @@ fun NowScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 90.dp)
+            contentPadding = PaddingValues(top = 10.dp, bottom = 96.dp)
         ) {
             // 1. Differentiated Mode Banner (Atmospheric Night Facade)
             item {
@@ -615,32 +616,124 @@ fun FreeNowSection(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            verticalAlignment = Alignment.Bottom,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 4.dp)
         ) {
-            Text(
-                text = "$freeCount free now",
-                fontFamily = FontFamily.Serif,
-                fontSize = 32.sp,
-                color = Moonlight
-            )
+            Column {
+                Text(
+                    text = "$freeCount free now",
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 28.sp,
+                    color = Moonlight
+                )
+                Text(
+                    text = if (isWorkplace) "Colleagues free for quick syncs or coffee" else "Friends free on campus right now",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Haze
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
+        // Quick row of glowing window avatars
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(freeMembers) { member ->
-                SyncWindow(
-                    family = StatusFamily.OPEN,
-                    initials = member.initials,
-                    toneName = member.tone,
-                    size = WindowSize.DEFAULT,
-                    onClick = { onSelectPerson(member) }
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { onSelectPerson(member) }
+                        .padding(vertical = 4.dp)
+                ) {
+                    SyncWindow(
+                        family = StatusFamily.OPEN,
+                        initials = member.initials,
+                        toneName = member.tone,
+                        size = WindowSize.DEFAULT
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = member.name.substringBefore(" "),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Moonlight,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Meaningful detailed member cards
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            freeMembers.forEach { member ->
+                Surface(
+                    color = if (isWorkplace) WorkplaceCard else Wall,
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, if (isWorkplace) WorkplaceBorder else Mullion),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelectPerson(member) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            SyncWindow(
+                                family = StatusFamily.OPEN,
+                                initials = member.initials,
+                                toneName = member.tone,
+                                size = WindowSize.DEFAULT
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = member.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = Moonlight,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                val detailStr = buildString {
+                                    append(member.statusLabel)
+                                    if (member.place.isNotBlank()) append(" · ${member.place}")
+                                    val tag = member.department ?: member.sharedCircles.firstOrNull()
+                                    if (!tag.isNullOrBlank()) append(" ($tag)")
+                                }
+                                Text(
+                                    text = detailStr,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Haze,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+
+                        SyncOutlinedButton(
+                            text = "Meet",
+                            onClick = { onSelectPerson(member) }
+                        )
+                    }
+                }
             }
         }
     }

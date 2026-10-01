@@ -58,7 +58,9 @@ fun OnboardingFlow(
         modifier = modifier
             .fillMaxSize()
             .background(Night)
-            .padding(24.dp),
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         contentAlignment = Alignment.Center
     ) {
         when (step) {
