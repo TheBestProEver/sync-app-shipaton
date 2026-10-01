@@ -2,6 +2,7 @@ package com.example.service
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.util.Log
 import com.example.data.repository.SyncRepository
 import com.revenuecat.purchases.CustomerInfo
@@ -11,6 +12,7 @@ import com.revenuecat.purchases.Package
 import com.revenuecat.purchases.PurchaseParams
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
+import com.revenuecat.purchases.PurchasesTransactionException
 import com.revenuecat.purchases.awaitCustomerInfo
 import com.revenuecat.purchases.awaitOfferings
 import com.revenuecat.purchases.awaitPurchase
@@ -32,9 +34,21 @@ data class WorkplaceSeatTier(
     val rcPackage: Package? = null
 )
 
+/** Finds the Activity behind a Compose LocalContext (needed to launch a purchase). */
+fun Context.findActivity(): Activity? {
+    var current: Context = this
+    while (current is ContextWrapper) {
+        if (current is Activity) return current
+        current = current.baseContext
+    }
+    return null
+}
+
 object RevenueCatManager {
     private const val TAG = "RevenueCatManager"
-    const val ENTITLEMENT_PRO = "pro"
+
+    /** Entitlement configured in the RevenueCat dashboard that unlocks Community Pro. */
+    const val ENTITLEMENT_PRO = "sync_unlimited"
     const val OFFERING_WORKPLACE = "workplace"
     const val OFFERING_PRO = "pro"
 
@@ -77,9 +91,16 @@ object RevenueCatManager {
                 setupFallbackTiers()
             }
         } else {
-            Log.w(TAG, "RevenueCat API key is empty or placeholder. Setting up dynamic fallback tiers.")
+            Log.w(TAG, "RevenueCat API key is empty or a placeholder. Purchases are disabled.")
             setupFallbackTiers()
         }
+    }
+
+    private fun applyCustomerInfo(customerInfo: CustomerInfo): Boolean {
+        val proActive = customerInfo.entitlements[ENTITLEMENT_PRO]?.isActive == true
+        _isPro.value = proActive
+        syncRepository?.setPro(proActive)
+        return proActive
     }
 
     fun refresh() {
@@ -91,22 +112,19 @@ object RevenueCatManager {
         scope.launch {
             _isLoading.value = true
             try {
-                val customerInfo = Purchases.sharedInstance.awaitCustomerInfo()
-                val proActive = customerInfo.entitlements[ENTITLEMENT_PRO]?.isActive == true
-                _isPro.value = proActive
-                syncRepository?.setPro(proActive)
+                applyCustomerInfo(Purchases.sharedInstance.awaitCustomerInfo())
 
                 val offerings = Purchases.sharedInstance.awaitOfferings()
-                val wpOffering = offerings[OFFERING_WORKPLACE] ?: offerings.current
+                _proOffering.value = offerings[OFFERING_PRO] ?: offerings.current
+
+                // Only use a dedicated "workplace" offering for seat tiers. Falling back to the
+                // Pro offering would show subscription packages as seat tiers.
+                val wpOffering = offerings[OFFERING_WORKPLACE]
                 _workplaceOffering.value = wpOffering
 
-                val proOff = offerings[OFFERING_PRO] ?: offerings.current
-                _proOffering.value = proOff
-
                 if (wpOffering != null && wpOffering.availablePackages.isNotEmpty()) {
-                    val tiers = wpOffering.availablePackages.map { pkg ->
+                    _workplaceTiers.value = wpOffering.availablePackages.map { pkg ->
                         val id = pkg.identifier
-                        val price = pkg.product.price.formatted
                         val title = pkg.product.title
                         val seats = when {
                             id.contains("500") || title.contains("500") -> 500
@@ -119,12 +137,11 @@ object RevenueCatManager {
                             id = id,
                             name = title.ifBlank { "Business $seats" },
                             seats = seats,
-                            formattedPrice = price,
+                            formattedPrice = pkg.product.price.formatted,
                             period = "year",
                             rcPackage = pkg
                         )
                     }.sortedBy { it.seats }
-                    _workplaceTiers.value = tiers
                 } else {
                     setupFallbackTiers()
                 }
@@ -137,6 +154,7 @@ object RevenueCatManager {
         }
     }
 
+    /** Display-only tiers, used when no "workplace" offering exists. These can't be purchased. */
     private fun setupFallbackTiers() {
         _workplaceTiers.value = listOf(
             WorkplaceSeatTier("wp_team_25", "Team 25", 25, "$299 a year", "year"),
@@ -146,22 +164,58 @@ object RevenueCatManager {
         )
     }
 
-    fun restorePurchases(onComplete: (success: Boolean, message: String) -> Unit) {
+    /**
+     * Buys Community Pro through RevenueCat. Pro unlocks only if the [ENTITLEMENT_PRO]
+     * entitlement is active afterwards.
+     */
+    fun purchasePro(
+        activity: Activity,
+        pkg: Package?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         if (!Purchases.isConfigured) {
-            _isPro.value = true
-            syncRepository?.setPro(true)
-            onComplete(true, "Purchases restored (Development Mode)")
+            onError("RevenueCat isn't configured. Set REVENUECAT_API_KEY.")
+            return
+        }
+        val packageToBuy = pkg ?: _proOffering.value?.availablePackages?.firstOrNull()
+        if (packageToBuy == null) {
+            onError("No Pro packages found in the current RevenueCat offering.")
             return
         }
 
         scope.launch {
             _isLoading.value = true
             try {
-                val customerInfo = Purchases.sharedInstance.awaitRestore()
-                val proActive = customerInfo.entitlements[ENTITLEMENT_PRO]?.isActive == true
-                _isPro.value = proActive
-                syncRepository?.setPro(proActive)
-                if (proActive) {
+                val result = Purchases.sharedInstance.awaitPurchase(
+                    PurchaseParams.Builder(activity, packageToBuy).build()
+                )
+                if (applyCustomerInfo(result.customerInfo)) {
+                    onSuccess()
+                } else {
+                    onError("Purchase finished, but Pro isn't active yet.")
+                }
+            } catch (e: PurchasesTransactionException) {
+                onError(if (e.userCancelled) "Purchase cancelled." else (e.localizedMessage ?: "Purchase failed."))
+            } catch (e: Exception) {
+                Log.e(TAG, "Pro purchase error", e)
+                onError(e.localizedMessage ?: "Purchase failed.")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun restorePurchases(onComplete: (success: Boolean, message: String) -> Unit) {
+        if (!Purchases.isConfigured) {
+            onComplete(false, "RevenueCat isn't configured. Set REVENUECAT_API_KEY.")
+            return
+        }
+
+        scope.launch {
+            _isLoading.value = true
+            try {
+                if (applyCustomerInfo(Purchases.sharedInstance.awaitRestore())) {
                     onComplete(true, "Restored! Community Pro is active.")
                 } else {
                     onComplete(false, "No active subscriptions found.")
@@ -182,23 +236,26 @@ object RevenueCatManager {
         onError: (String) -> Unit
     ) {
         val pkg = tier.rcPackage
-        if (Purchases.isConfigured && pkg != null) {
-            scope.launch {
-                try {
-                    Purchases.sharedInstance.awaitPurchase(
-                        PurchaseParams.Builder(activity, pkg).build()
-                    )
-                    onSuccess(tier.seats, tier.name)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Workplace purchase error", e)
-                    onError(e.localizedMessage ?: "Purchase cancelled or failed.")
-                }
+        if (!Purchases.isConfigured || pkg == null) {
+            onError("Workplace plans aren't set up in RevenueCat yet (needs a \"workplace\" offering).")
+            return
+        }
+        scope.launch {
+            try {
+                Purchases.sharedInstance.awaitPurchase(
+                    PurchaseParams.Builder(activity, pkg).build()
+                )
+                onSuccess(tier.seats, tier.name)
+            } catch (e: PurchasesTransactionException) {
+                onError(if (e.userCancelled) "Purchase cancelled." else (e.localizedMessage ?: "Purchase failed."))
+            } catch (e: Exception) {
+                Log.e(TAG, "Workplace purchase error", e)
+                onError(e.localizedMessage ?: "Purchase failed.")
             }
-        } else {
-            onSuccess(tier.seats, tier.name)
         }
     }
 
+    /** Kept for existing callers. Prefer [purchasePro]; this does not charge anything. */
     fun unlockProImmediately() {
         _isPro.value = true
         syncRepository?.setPro(true)
