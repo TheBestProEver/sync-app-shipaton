@@ -22,6 +22,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.StatusFamily
 import com.example.service.RevenueCatManager
+import com.example.service.findActivity
 import com.example.ui.components.SyncButton
 import com.example.ui.components.SyncOutlinedButton
 import com.example.ui.components.SyncWindow
@@ -150,14 +151,30 @@ fun ProPaywallDialog(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // The one filled button (Unlocks Pro immediately)
+                // The one filled button: real purchase through RevenueCat
                 SyncButton(
-                    text = if (isPurchasing) "Unlocking..." else if (selectedPlan == "annual") "Start 7-day free trial" else "Subscribe to Pro",
+                    text = if (isPurchasing) "Processing..." else if (selectedPlan == "annual") "Start 7-day free trial" else "Subscribe to Pro",
                     onClick = {
+                        if (isPurchasing) return@SyncButton
+                        val activity = context.findActivity()
+                        if (activity == null) {
+                            Toast.makeText(context, "Couldn't start the purchase.", Toast.LENGTH_SHORT).show()
+                            return@SyncButton
+                        }
                         isPurchasing = true
-                        RevenueCatManager.unlockProImmediately()
-                        onPurchaseSuccess()
-                        Toast.makeText(context, "Community Pro unlocked!", Toast.LENGTH_SHORT).show()
+                        RevenueCatManager.purchasePro(
+                            activity = activity,
+                            pkg = if (selectedPlan == "annual") annualPkg else monthlyPkg,
+                            onSuccess = {
+                                isPurchasing = false
+                                onPurchaseSuccess()
+                                Toast.makeText(context, "Community Pro unlocked!", Toast.LENGTH_SHORT).show()
+                            },
+                            onError = { message ->
+                                isPurchasing = false
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            }
+                        )
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -311,10 +328,20 @@ fun WorkplaceUpgradeDialog(
                     text = buttonText,
                     enabled = buttonTier != null && buttonTier.seats != seatLimit && buttonTier.seats >= seatsUsed,
                     onClick = {
-                        if (buttonTier != null) {
-                            onUpgradeSeats(buttonTier.seats, buttonTier.name)
-                            Toast.makeText(context, "Upgraded to ${buttonTier.name}!", Toast.LENGTH_SHORT).show()
-                            onDismiss()
+                        val activity = context.findActivity()
+                        if (buttonTier != null && activity != null) {
+                            RevenueCatManager.purchaseWorkplaceTier(
+                                activity = activity,
+                                tier = buttonTier,
+                                onSuccess = { newLimit, newTier ->
+                                    onUpgradeSeats(newLimit, newTier)
+                                    Toast.makeText(context, "Upgraded to $newTier!", Toast.LENGTH_SHORT).show()
+                                    onDismiss()
+                                },
+                                onError = { message ->
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
