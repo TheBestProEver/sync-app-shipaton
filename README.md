@@ -52,24 +52,39 @@ Built for the **RevenueCat Shipaton 2026** (Next Gen / Student category).
 
 ## Project Structure
 app/src/main/java/com/example/
+
 ├── MainActivity.kt # Entry point
+
 ├── SyncApplication.kt # App init (RevenueCat, Firebase)
+
 ├── data/ # Models and SyncRepository
+
 ├── service/ # Auth and calendar services
+
 └── ui/
+
 ├── now/ # Status, pulses, mixer
+
 ├── week/ # Weekly schedule and office days
+
 ├── circles/ # Circles / teams and discovery
+
 ├── you/ # Profile and settings
+
 ├── space/ # Space switcher and admin console
+
 ├── paywall/ # Pro and workplace upgrade flows
+
 ├── onboarding/ # First-run flow
+
 ├── components/ # Shared UI components
+
 └── theme/ # Design system (colors, type)
+
 
 
 
 
 ## License
 
-MIT © 2026 Arnav. See [](LICENSE).
+MIT © 2026 Arnav. See [LICENSE](LICENSE).
