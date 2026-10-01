@@ -272,7 +272,7 @@ fun NowScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                 val overlapCircle = if (isWorkplace) "Platform Team" else "Physics '29"
                                 Text(
                                     text = overlapCircle,

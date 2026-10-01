@@ -35,7 +35,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun OnboardingFlow(
-    onComplete: (name: String, tone: String) -> Unit,
+    onComplete: (name: String, email: String, tone: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var step by remember { mutableIntStateOf(0) } // 0 = Welcome, 1 = Email, 2 = Code, 3 = Age, 4 = Profile, 5 = Ready
@@ -351,7 +351,11 @@ fun OnboardingFlow(
 
                     SyncButton(
                         text = "Enter SYNC",
-                        onClick = { onComplete(displayName, windowTone) },
+                        onClick = {
+                            val finalName = displayName.trim().ifBlank { "Arnav" }
+                            val finalEmail = email.trim().ifBlank { "arnav@uchicago.edu" }
+                            onComplete(finalName, finalEmail, windowTone)
+                        },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

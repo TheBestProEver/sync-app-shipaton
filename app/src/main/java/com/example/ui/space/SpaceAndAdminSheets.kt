@@ -260,8 +260,20 @@ fun AdminConsoleDialog(
                             color = Moonlight
                         )
                         Spacer(modifier = Modifier.height(8.dp))
+                        val context = androidx.compose.ui.platform.LocalContext.current
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SyncOutlinedButton(text = "Invite teammate", onClick = {})
+                            SyncOutlinedButton(
+                                text = "Invite teammate",
+                                onClick = {
+                                    val sendIntent = android.content.Intent().apply {
+                                        action = android.content.Intent.ACTION_SEND
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "Join our ${space.name} workspace on SYNC! Enter join code: ${space.inviteCode} in the app.")
+                                        type = "text/plain"
+                                    }
+                                    val shareIntent = android.content.Intent.createChooser(sendIntent, "Invite teammate to ${space.name}")
+                                    context.startActivity(shareIntent)
+                                }
+                            )
                             SyncButton(text = "Manage plan", onClick = onOpenWorkplaceUpgrade)
                         }
                     }

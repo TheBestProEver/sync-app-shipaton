@@ -1,4 +1,5 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -20,6 +21,14 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    val localPropsFile = rootProject.file("local.properties")
+    val localProperties = Properties()
+    if (localPropsFile.exists()) {
+      localProperties.load(localPropsFile.inputStream())
+    }
+    val rcKeyFromLocal = localProperties.getProperty("REVENUECAT_API_KEY") ?: ""
+    buildConfigField("String", "REVENUECAT_LOCAL_PROPS_KEY", "\"$rcKeyFromLocal\"")
   }
 
   signingConfigs {
@@ -117,6 +126,8 @@ dependencies {
   implementation(libs.okhttp)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  implementation(libs.revenuecat.purchases)
+  implementation(libs.revenuecat.purchases.ui)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)

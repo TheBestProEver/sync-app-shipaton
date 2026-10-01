@@ -153,20 +153,20 @@ fun TypeBadge(
     modifier: Modifier = Modifier
 ) {
     val isWorkplace = type == SpaceType.WORKPLACE
-    val badgeText = if (isWorkplace) "Workplace · Business" else "Campus Community"
+    val badgeText = if (isWorkplace) "Workplace" else "Community"
     val borderCol = if (isWorkplace) WorkplaceSteel.copy(alpha = 0.6f) else Amber.copy(alpha = 0.4f)
     val bgCol = if (isWorkplace) WorkplaceCard else WallRaised.copy(alpha = 0.6f)
     val textCol = if (isWorkplace) WorkplaceSteel else Amber
 
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         color = bgCol,
         border = androidx.compose.foundation.BorderStroke(1.dp, borderCol),
         modifier = modifier
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
         ) {
             if (isWorkplace) {
                 Icon(
@@ -175,7 +175,7 @@ fun TypeBadge(
                     tint = WorkplaceSteel,
                     modifier = Modifier.size(11.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(3.dp))
             } else {
                 Icon(
                     Icons.Default.Groups,
@@ -183,14 +183,16 @@ fun TypeBadge(
                     tint = Amber,
                     modifier = Modifier.size(11.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(3.dp))
             }
             Text(
                 text = badgeText,
                 color = textCol,
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
@@ -258,7 +260,7 @@ fun SpaceHeader(
             .statusBarsPadding() // Ensures content sits strictly below battery, clock, and camera notch
     ) {
         // Generous negative space between phone UI / status bar and header content
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Ambient accent top stripe for workplace / community
         Box(
@@ -279,7 +281,7 @@ fun SpaceHeader(
                 )
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Surface(
             color = Color.Transparent,
@@ -361,14 +363,16 @@ fun SyncButton(
             disabledContainerColor = Mullion,
             disabledContentColor = Dusk
         ),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
-        modifier = modifier.defaultMinSize(minHeight = 48.dp)
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
+        modifier = modifier.defaultMinSize(minHeight = 44.dp)
     ) {
         Text(
             text = text,
             color = if (enabled) Night else Dusk,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }
@@ -391,14 +395,16 @@ fun SyncOutlinedButton(
             contentColor = if (enabled) Moonlight else Dusk,
             disabledContentColor = Dusk
         ),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-        modifier = modifier.defaultMinSize(minHeight = 44.dp)
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+        modifier = modifier.defaultMinSize(minHeight = 36.dp, minWidth = 68.dp)
     ) {
         Text(
             text = text,
             color = if (enabled) Moonlight else Dusk,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            softWrap = false
         )
     }
 }

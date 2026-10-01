@@ -256,6 +256,13 @@ fun SyncMainScreen(
                     onRequestJoinDiscoverCircle = { repo.requestDiscoverCircle(it) },
                     onJoinCircleByCode = { code ->
                         repo.joinCircleByCode(code)
+                    },
+                    onCreateCircle = { name, kind ->
+                        val success = repo.createCircle(currentSpace.id, name, kind)
+                        if (!success) {
+                            showProPaywall = true
+                        }
+                        success
                     }
                 )
                 3 -> YouScreen(
@@ -374,7 +381,10 @@ fun SyncMainScreen(
     if (showProPaywall) {
         ProPaywallDialog(
             onDismiss = { showProPaywall = false },
-            onPurchaseSuccess = { repo.upgradeToPro() }
+            onPurchaseSuccess = {
+                repo.upgradeToPro()
+                showProPaywall = false
+            }
         )
     }
 
@@ -386,6 +396,7 @@ fun SyncMainScreen(
             onDismiss = { showWorkplaceUpgrade = false },
             onUpgradeSeats = { newLimit, newTier ->
                 repo.upgradeWorkplaceSeats(newLimit, newTier)
+                showWorkplaceUpgrade = false
             }
         )
     }

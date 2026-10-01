@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -269,16 +270,41 @@ fun YouScreen(
                                 .clickable { onOpenStatusSheetForSpace(space) }
                                 .padding(vertical = 8.dp)
                         ) {
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = space.name, style = MaterialTheme.typography.bodyLarge, color = Moonlight)
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = space.name,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = Moonlight,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f, fill = false)
+                                    )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     TypeBadge(type = space.type)
                                 }
+                                Spacer(modifier = Modifier.height(2.dp))
                                 val st = if (space.currentStatusLabel.isNotBlank()) space.currentStatusLabel else "No status set"
-                                Text(text = st, style = MaterialTheme.typography.bodyMedium, color = if (space.currentStatusFamily == StatusFamily.OPEN) Amber else Haze)
+                                Text(
+                                    text = st,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (space.currentStatusFamily == StatusFamily.OPEN) Amber else Haze,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
-                            SyncOutlinedButton(text = "Change", onClick = { onOpenStatusSheetForSpace(space) })
+                            SyncOutlinedButton(
+                                text = "Change",
+                                onClick = { onOpenStatusSheetForSpace(space) },
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
                         }
                         if (idx < spaces.size - 1) {
                             Divider(color = Mullion, thickness = 0.5.dp)
@@ -359,7 +385,11 @@ fun YouScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 12.dp)
+                        ) {
                             Text(text = "Community Pro", style = MaterialTheme.typography.bodyLarge, color = Moonlight)
                             Text(
                                 text = if (userProfile.isPro) "Active (Unlimited circles & rituals)" else "Free tier (Up to 12 members)",
@@ -384,7 +414,11 @@ fun YouScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 12.dp)
+                        ) {
                             Text(text = "Kestrel Labs (Workplace)", style = MaterialTheme.typography.bodyLarge, color = Moonlight)
                             Text(text = "Business 100 · 100/100 seats used", style = MaterialTheme.typography.bodyMedium, color = Haze)
                         }

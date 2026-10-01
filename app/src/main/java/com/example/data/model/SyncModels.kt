@@ -22,6 +22,7 @@ data class WindowTone(
 data class UserProfile(
     val id: String = "user_arnav",
     val displayName: String = "Arnav",
+    val email: String = "arnav@uchicago.edu",
     val windowTone: String = "Rose",
     val birthYear: Int = 2007,
     val timezone: String = "America/Chicago",
@@ -55,7 +56,8 @@ data class SyncSpace(
     val planRenewsDate: String = "Sep 29, 2027",
     val isFocusHoursActive: Boolean = false,
     val focusHoursBannerText: String = "7 in focus until 11:00",
-    val isMixerEnabled: Boolean = true
+    val isMixerEnabled: Boolean = true,
+    val inviteCode: String = "ENG101"
 )
 
 data class CircleMember(
@@ -69,8 +71,20 @@ data class CircleMember(
     val expiresAt: Long = 0L,
     val sharedCircles: List<String> = emptyList(),
     val department: String? = null,
+    val timezone: String = "America/Chicago",
     val localTimeStr: String = ""
-)
+) {
+    fun computedLocalTime(): String {
+        return try {
+            val zoneId = java.time.ZoneId.of(timezone)
+            val zonedDateTime = java.time.Instant.now().atZone(zoneId)
+            val formatter = java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.US)
+            zonedDateTime.format(formatter).lowercase()
+        } catch (e: Exception) {
+            localTimeStr.ifBlank { "" }
+        }
+    }
+}
 
 data class SyncCircle(
     val id: String,

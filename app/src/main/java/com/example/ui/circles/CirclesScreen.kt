@@ -35,14 +35,17 @@ fun CirclesScreen(
     onAddMemberToCircle: (circleId: String, name: String) -> Boolean,
     onRequestJoinDiscoverCircle: (circleId: String) -> Unit,
     onJoinCircleByCode: (code: String) -> Unit,
+    onCreateCircle: (name: String, kind: String) -> Boolean = { _, _ -> true },
     modifier: Modifier = Modifier
 ) {
     val spaceCircles = circles.filter { it.spaceId == currentSpace.id }
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Circles/Teams, 1 = Discover (Community only)
     var selectedCircleForDetail by remember { mutableStateOf<SyncCircle?>(null) }
     var showJoinCodeDialog by remember { mutableStateOf(false) }
+    var showCreateCircleDialog by remember { mutableStateOf(false) }
 
     val screenTitle = if (currentSpace.type == SpaceType.WORKPLACE) "Teams" else "Circles"
+    val singleItemName = if (currentSpace.type == SpaceType.WORKPLACE) "team" else "circle"
 
     Column(
         modifier = modifier
@@ -121,18 +124,18 @@ fun CirclesScreen(
                         .padding(vertical = 10.dp)
                 ) {
                     SyncButton(
-                        text = "Start a $screenTitle",
+                        text = "Start a $singleItemName",
                         onClick = {
                             if (!userProfile.isPro && spaceCircles.count { it.isOwner } >= 2) {
                                 onOpenProPaywall()
                             } else {
-                                // Handled
+                                showCreateCircleDialog = true
                             }
                         },
                         modifier = Modifier.weight(1f)
                     )
                     SyncOutlinedButton(
-                        text = "Join code",
+                        text = "Join with code",
                         onClick = { showJoinCodeDialog = true },
                         modifier = Modifier.weight(1f)
                     )
@@ -141,8 +144,37 @@ fun CirclesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 40.dp)
                 ) {
+                    if (spaceCircles.isEmpty()) {
+                        item {
+                            Surface(
+                                color = Wall,
+                                shape = RoundedCornerShape(14.dp),
+                                border = BorderStroke(1.dp, Mullion),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "No $screenTitle Yet",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = Moonlight
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Start a $singleItemName or join one using an invite code to coordinate free time.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Haze,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     items(spaceCircles) { circle ->
                         CircleCard(
                             circle = circle,
@@ -152,6 +184,21 @@ fun CirclesScreen(
                 }
             }
         }
+    }
+
+    // Create Circle Dialog
+    if (showCreateCircleDialog) {
+        CreateCircleDialog(
+            isWorkplace = currentSpace.type == SpaceType.WORKPLACE,
+            onDismiss = { showCreateCircleDialog = false },
+            onCreate = { name, kind ->
+                showCreateCircleDialog = false
+                val created = onCreateCircle(name, kind)
+                if (!created) {
+                    onOpenProPaywall()
+                }
+            }
+        )
     }
 
     // Detail dialog for Circle
@@ -177,6 +224,7 @@ fun CirclesScreen(
     // Join Code Dialog
     if (showJoinCodeDialog) {
         JoinCodeDialog(
+            isWorkplace = currentSpace.type == SpaceType.WORKPLACE,
             onDismiss = { showJoinCodeDialog = false },
             onJoin = { code ->
                 onJoinCircleByCode(code)
@@ -480,10 +528,12 @@ fun DiscoverContent(
 
 @Composable
 fun JoinCodeDialog(
+    isWorkplace: Boolean = false,
     onDismiss: () -> Unit,
     onJoin: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
+    val entityName = if (isWorkplace) "team" else "circle"
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -493,9 +543,9 @@ fun JoinCodeDialog(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text(text = "Join a circle", style = MaterialTheme.typography.titleLarge, color = Moonlight)
+                Text(text = "Join a $entityName", style = MaterialTheme.typography.titleLarge, color = Moonlight)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "Enter the 6-character circle code", style = MaterialTheme.typography.bodyMedium, color = Haze)
+                Text(text = "Enter the 6-character $entityName code", style = MaterialTheme.typography.bodyMedium, color = Haze)
 
                 Spacer(modifier = Modifier.height(14.dp))
 
@@ -524,3 +574,106 @@ fun JoinCodeDialog(
         }
     }
 }
+
+@Composable
+fun CreateCircleDialog(
+    isWorkplace: Boolean = false,
+    onDismiss: () -> Unit,
+    onCreate: (name: String, kind: String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    val entityName = if (isWorkplace) "team" else "circle"
+    val kinds = if (isWorkplace) listOf("Department", "Squad", "Project") else listOf("Squad", "Club", "House")
+    var selectedKind by remember { mutableStateOf(kinds.first()) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            color = Wall,
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, Mullion),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Start a $entityName",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Moonlight
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Close", tint = Haze)
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Create a new $entityName for friends or teammates to share availability.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Haze
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    placeholder = { Text("e.g. Study Squad, Runners", color = Dusk) },
+                    label = { Text("${entityName.replaceFirstChar { it.uppercase() }} name", color = Haze) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Moonlight,
+                        unfocusedBorderColor = Mullion,
+                        focusedTextColor = Moonlight,
+                        unfocusedTextColor = Moonlight
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(
+                    text = "Type of $entityName",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Haze
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    kinds.forEach { kind ->
+                        val isSel = selectedKind == kind
+                        Surface(
+                            color = if (isSel) Moonlight else WallRaised,
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, if (isSel) Moonlight else Mullion),
+                            modifier = Modifier
+                                .clickable { selectedKind = kind }
+                                .padding(vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = kind,
+                                color = if (isSel) Night else Moonlight,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                SyncButton(
+                    text = "Create $entityName",
+                    enabled = name.isNotBlank(),
+                    onClick = {
+                        onCreate(name, selectedKind)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+

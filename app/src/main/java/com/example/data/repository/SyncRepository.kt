@@ -6,7 +6,6 @@ import com.example.data.local.CalendarSlotEntity
 import com.example.data.local.SyncDatabase
 import com.example.data.model.*
 import com.example.service.CalendarSyncService
-import com.example.service.FirebaseAuthService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +24,6 @@ class SyncRepository(
     private val db: SyncDatabase? = context?.let { SyncDatabase.getInstance(it) }
     private val calendarDao: CalendarSlotDao? = db?.calendarSlotDao()
     val calendarSyncService: CalendarSyncService? = calendarDao?.let { CalendarSyncService(it) }
-    val authService: FirebaseAuthService? = context?.let { FirebaseAuthService(it) }
 
     val cachedCalendarSlots: Flow<List<CalendarSlotEntity>> =
         calendarDao?.getAllSlots() ?: emptyFlow()
@@ -153,36 +151,37 @@ class SyncRepository(
                 currentStatusExpiresAt = nowMs + 3600 * 1000,
                 shareLevel = "Titles",
                 seatLimit = 100,
-                seatsUsed = 100,
+                seatsUsed = 10,
                 planTier = "Business 100",
                 planRenewsDate = "Sep 29, 2027",
                 isFocusHoursActive = true,
                 focusHoursBannerText = "7 in focus until 11:00",
-                isMixerEnabled = true
+                isMixerEnabled = true,
+                inviteCode = "ENG101"
             )
         )
 
         // 2. Members for circles
-        val memberMaya = CircleMember("m1", "Maya Chen", "MC", "Rose", StatusFamily.OPEN, "Free for food", "Bartlett", oneHourLater, listOf("Physics '29", "UC Quantum"))
-        val memberTomas = CircleMember("m2", "Tomás Rivera", "TR", "Sage", StatusFamily.OPEN, "Free for coffee", "Ex Libris", oneHourLater, listOf("Physics '29"))
-        val memberKai = CircleMember("m3", "Kai Patel", "KP", "Sky", StatusFamily.OPEN, "Free now", "Reg 3rd floor", oneHourLater, listOf("Physics '29"))
-        val memberLiam = CircleMember("m4", "Liam O'Connor", "LO", "Teal", StatusFamily.OPEN, "Up for lunch", "Bartlett", oneHourLater, listOf("Physics '29"))
-        val memberJordan = CircleMember("m5", "Jordan Smith", "JS", "Moss", StatusFamily.OPEN, "Free until 2:00", "Mansueto", twoHoursLater, listOf("Physics '29"))
-        val memberElena = CircleMember("m6", "Elena Rostova", "ER", "Lavender", StatusFamily.FOCUSED, "Studying alone", "The Reg", oneHourLater, listOf("Physics '29"))
-        val memberAlex = CircleMember("m7", "Alex Reed", "AR", "Stone", StatusFamily.FOCUSED, "Recharging", "Dorm", oneHourLater, listOf("Physics '29"))
-        val memberSam = CircleMember("m8", "Sam Wilson", "SW", "Coral", StatusFamily.BUSY, "In class until 1:15", "Kersten", oneHourLater, listOf("Physics '29"))
-        val memberChris = CircleMember("m9", "Chris Vance", "CV", "Sky", StatusFamily.AWAY, "Out", "", 0L, listOf("Physics '29"))
+        val memberMaya = CircleMember("m1", "Maya Chen", "MC", "Rose", StatusFamily.OPEN, "Free for food", "Bartlett", oneHourLater, listOf("Physics '29", "UC Quantum"), timezone = "America/Chicago")
+        val memberTomas = CircleMember("m2", "Tomás Rivera", "TR", "Sage", StatusFamily.OPEN, "Free for coffee", "Ex Libris", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberKai = CircleMember("m3", "Kai Patel", "KP", "Sky", StatusFamily.OPEN, "Free now", "Reg 3rd floor", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberLiam = CircleMember("m4", "Liam O'Connor", "LO", "Teal", StatusFamily.OPEN, "Up for lunch", "Bartlett", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberJordan = CircleMember("m5", "Jordan Smith", "JS", "Moss", StatusFamily.OPEN, "Free until 2:00", "Mansueto", twoHoursLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberElena = CircleMember("m6", "Elena Rostova", "ER", "Lavender", StatusFamily.FOCUSED, "Studying alone", "The Reg", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberAlex = CircleMember("m7", "Alex Reed", "AR", "Stone", StatusFamily.FOCUSED, "Recharging", "Dorm", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberSam = CircleMember("m8", "Sam Wilson", "SW", "Coral", StatusFamily.BUSY, "In class until 1:15", "Kersten", oneHourLater, listOf("Physics '29"), timezone = "America/Chicago")
+        val memberChris = CircleMember("m9", "Chris Vance", "CV", "Sky", StatusFamily.AWAY, "Out", "", 0L, listOf("Physics '29"), timezone = "America/Chicago")
 
-        // Workplace Platform Team members
-        val workDavid = CircleMember("w1", "David Kim", "DK", "Sky", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4A", oneHourLater, listOf("Platform"), "Platform", "9:42 am")
-        val workLena = CircleMember("w2", "Lena Vance", "LV", "Teal", StatusFamily.OPEN, "Open to chat", "Design Lounge", oneHourLater, listOf("Design"), "Design", "9:42 am")
-        val workOmar = CircleMember("w3", "Omar Haddad", "OH", "Lavender", StatusFamily.OPEN, "Free for coffee", "Café 2", oneHourLater, listOf("Sales"), "Sales", "9:42 am")
-        val workPriya = CircleMember("w4", "Priya Sharma", "PS", "Rose", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4B", oneHourLater, listOf("Platform"), "Platform", "9:42 am")
-        val workMarcus = CircleMember("w5", "Marcus Brody", "MB", "Sage", StatusFamily.BUSY, "In a meeting until 10:30", "Room 401", oneHourLater, listOf("Platform"), "Platform", "9:42 am")
-        val workZoe = CircleMember("w6", "Zoe Alverez", "ZA", "Moss", StatusFamily.FOCUSED, "Heads down until 11", "Remote", oneHourLater, listOf("Platform"), "Platform", "10:42 am in NY")
-        val workBrian = CircleMember("w7", "Brian Hughes", "BH", "Stone", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4C", oneHourLater, listOf("Platform"), "Platform", "9:42 am")
-        val workAisha = CircleMember("w8", "Aisha Khan", "AK", "Coral", StatusFamily.OPEN, "Free for lunch", "Cafeteria", twoHoursLater, listOf("Platform"), "Platform", "3:42 pm in London")
-        val workLeo = CircleMember("w9", "Leo Vance", "LV", "Sky", StatusFamily.BUSY, "On a call", "Phone Booth", oneHourLater, listOf("Platform"), "Platform", "8:42 am in Denver")
+        // Workplace Platform Team members with dynamic timezones (computes real local times)
+        val workDavid = CircleMember("w1", "David Kim", "DK", "Sky", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4A", oneHourLater, listOf("Platform"), "Platform", timezone = "America/Chicago")
+        val workLena = CircleMember("w2", "Lena Vance", "LV", "Teal", StatusFamily.OPEN, "Open to chat", "Design Lounge", oneHourLater, listOf("Design"), "Design", timezone = "America/Chicago")
+        val workOmar = CircleMember("w3", "Omar Haddad", "OH", "Lavender", StatusFamily.OPEN, "Free for coffee", "Café 2", oneHourLater, listOf("Sales"), "Sales", timezone = "America/Chicago")
+        val workPriya = CircleMember("w4", "Priya Sharma", "PS", "Rose", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4B", oneHourLater, listOf("Platform"), "Platform", timezone = "America/Chicago")
+        val workMarcus = CircleMember("w5", "Marcus Brody", "MB", "Sage", StatusFamily.BUSY, "In a meeting until 10:30", "Room 401", oneHourLater, listOf("Platform"), "Platform", timezone = "America/Chicago")
+        val workZoe = CircleMember("w6", "Zoe Alverez", "ZA", "Moss", StatusFamily.FOCUSED, "Heads down until 11", "Remote", oneHourLater, listOf("Platform"), "Platform", timezone = "America/New_York")
+        val workBrian = CircleMember("w7", "Brian Hughes", "BH", "Stone", StatusFamily.FOCUSED, "Heads down until 11", "Desk 4C", oneHourLater, listOf("Platform"), "Platform", timezone = "America/Chicago")
+        val workAisha = CircleMember("w8", "Aisha Khan", "AK", "Coral", StatusFamily.OPEN, "Free for lunch", "Cafeteria", twoHoursLater, listOf("Platform"), "Platform", timezone = "Europe/London")
+        val workLeo = CircleMember("w9", "Leo Vance", "LV", "Sky", StatusFamily.BUSY, "On a call", "Phone Booth", oneHourLater, listOf("Platform"), "Platform", timezone = "America/Denver")
 
         // Hyde Park Runners (12 members initially)
         val runnerMembers = (1..12).map { index ->
@@ -447,6 +446,12 @@ class SyncRepository(
     }
 
     fun respondToPulse(pulseId: String, inPulse: Boolean) {
+        val target = _pulses.value.firstOrNull { it.id == pulseId } ?: return
+        // Tapping In or Can't on a cancelled or expired pulse must do nothing
+        if (target.state.equals("CANCELLED", ignoreCase = true) || target.state.equals("EXPIRED", ignoreCase = true)) {
+            return
+        }
+
         val currentUser = _userProfile.value
         val userMember = CircleMember(
             id = currentUser.id,
@@ -460,6 +465,10 @@ class SyncRepository(
         _pulses.update { list ->
             list.map { pulse ->
                 if (pulse.id == pulseId) {
+                    if (pulse.state.equals("CANCELLED", ignoreCase = true) || pulse.state.equals("EXPIRED", ignoreCase = true)) {
+                        return@map pulse
+                    }
+
                     val updatedInList = pulse.membersIn.toMutableList()
                     val updatedWaitlist = pulse.waitlist.toMutableList()
 
@@ -475,7 +484,9 @@ class SyncRepository(
                     }
 
                     val newCount = updatedInList.size
-                    val newState = if (newCount >= pulse.quorum) "CONFIRMED" else "OPEN"
+                    // A confirmed pulse stays confirmed if someone drops out after it confirms
+                    val wasConfirmed = pulse.state == "CONFIRMED"
+                    val newState = if (wasConfirmed || newCount >= pulse.quorum) "CONFIRMED" else "OPEN"
 
                     pulse.copy(
                         isUserIn = inPulse,
@@ -589,9 +600,13 @@ class SyncRepository(
         )
     }
 
-    fun upgradeToPro() {
+    fun setPro(pro: Boolean) {
         val oneYearLater = System.currentTimeMillis() + 365L * 24 * 3600 * 1000
-        _userProfile.update { it.copy(isPro = true, proUntil = oneYearLater) }
+        _userProfile.update { it.copy(isPro = pro, proUntil = if (pro) oneYearLater else null) }
+    }
+
+    fun upgradeToPro() {
+        setPro(true)
     }
 
     fun upgradeWorkplaceSeats(newSeatLimit: Int, newTier: String) {
@@ -602,6 +617,43 @@ class SyncRepository(
                 } else space
             }
         }
+    }
+
+    fun createCircle(spaceId: String, name: String, kind: String): Boolean {
+        val isPro = _userProfile.value.isPro
+        val ownedCount = _circles.value.count { it.isOwner }
+        if (!isPro && ownedCount >= 2) {
+            return false
+        }
+
+        val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val code = (1..6).map { alphabet.random() }.joinToString("")
+
+        val newCircle = SyncCircle(
+            id = "circle_${System.currentTimeMillis()}",
+            spaceId = spaceId,
+            name = name.trim().ifBlank { "New Circle" },
+            kind = kind.lowercase(),
+            memberCount = 1,
+            freeCount = 1,
+            isOwner = true,
+            visibility = "private",
+            joinCode = code,
+            members = listOf(
+                CircleMember(
+                    id = "m_me",
+                    name = _userProfile.value.displayName,
+                    initials = _userProfile.value.displayName.take(2).uppercase(),
+                    tone = _userProfile.value.windowTone,
+                    family = StatusFamily.OPEN,
+                    statusLabel = "Available",
+                    place = ""
+                )
+            )
+        )
+
+        _circles.update { it + newCircle }
+        return true
     }
 
     fun joinCircleByCode(code: String): SyncCircle? {
@@ -649,22 +701,37 @@ class SyncRepository(
         return true
     }
 
-    fun updateProfile(displayName: String, tone: String, timezone: String, workingHours: String) {
+    fun createSpace(name: String, type: SpaceType): SyncSpace {
+        val cleanName = name.trim().ifBlank { "New Space" }
+        val id = "space_${System.currentTimeMillis()}"
+        val newSpace = SyncSpace(
+            id = id,
+            type = type,
+            name = cleanName,
+            statusWordsTemplate = if (type == SpaceType.WORKPLACE) "Workplace" else "Community",
+            places = if (type == SpaceType.WORKPLACE) listOf("Office", "Remote", "Floor 3", "Cafeteria") else listOf("Library", "Cafe", "Quad", "Lounge"),
+            currentStatusLabel = "Available",
+            currentStatusFamily = StatusFamily.OPEN,
+            seatLimit = if (type == SpaceType.WORKPLACE) 25 else 100,
+            seatsUsed = 1,
+            planTier = if (type == SpaceType.WORKPLACE) "Team 25" else "Free",
+            inviteCode = "SPC${(100..999).random()}"
+        )
+        _spaces.update { it + newSpace }
+        _currentSpaceId.value = id
+        return newSpace
+    }
+
+    fun updateProfile(displayName: String, email: String, tone: String, timezone: String, workingHours: String) {
+        val domain = email.substringAfter("@", "uchicago.edu").ifBlank { "uchicago.edu" }
         _userProfile.update {
             it.copy(
                 displayName = displayName,
+                email = email,
+                verifiedDomain = domain,
                 windowTone = tone,
                 timezone = timezone,
                 workingHours = workingHours
-            )
-        }
-    }
-
-    fun updateProfileFromGoogle(name: String, email: String) {
-        _userProfile.update {
-            it.copy(
-                displayName = name,
-                verifiedDomain = email.substringAfter("@")
             )
         }
     }
