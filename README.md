@@ -44,4 +44,32 @@ Built for the **RevenueCat Shipaton 2026** (Next Gen / Student category).
    cd sync-app-shipaton
 ```
 
-2. **Add your RevenueCat key.** Copy `.env.example` to `.env` and set your public SDK key:
+2. **Add your RevenueCat key.**
+
+3. **Firebase (optional for local testing).** Place your `google-services.json` in the `app/` folder to enable sign-in. Without it, the build still runs and only shows a warning.
+
+4. **Run it.** Open the project in Android Studio, let Gradle sync, and run the `app` configuration.
+
+## Project Structure
+app/src/main/java/com/example/
+├── MainActivity.kt # Entry point
+├── SyncApplication.kt # App init (RevenueCat, Firebase)
+├── data/ # Models and SyncRepository
+├── service/ # Auth and calendar services
+└── ui/
+├── now/ # Status, pulses, mixer
+├── week/ # Weekly schedule and office days
+├── circles/ # Circles / teams and discovery
+├── you/ # Profile and settings
+├── space/ # Space switcher and admin console
+├── paywall/ # Pro and workplace upgrade flows
+├── onboarding/ # First-run flow
+├── components/ # Shared UI components
+└── theme/ # Design system (colors, type)
+
+
+
+
+## License
+
+MIT © 2026 Arnav. See [](LICENSE).
