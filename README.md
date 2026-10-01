@@ -82,9 +82,6 @@ app/src/main/java/com/example/
 └── theme/ # Design system (colors, type)
 
 
-
-
-
 ## License
 
-MIT © 2026 Arnav. See [LICENSE](LICENSE).
+Copyright © 2026 Arnav Rai. All Rights Reserved. This code is shared for viewing and evaluation only and may not be copied, modified, or redistributed without permission. See [LICENSE](LICENSE).
